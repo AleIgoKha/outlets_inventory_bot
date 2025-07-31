@@ -12,6 +12,7 @@ async def outlet_menu(outlet_id):
     today = datetime.now(pytz.timezone('Europe/Chisinau'))
     check_flag = await is_there_report(outlet_id, today)
     
+    check_text = ''
     if check_flag:
         check_text = ' ☑️'
     
