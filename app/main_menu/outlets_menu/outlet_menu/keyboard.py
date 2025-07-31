@@ -20,7 +20,7 @@ async def outlet_menu(outlet_id):
     
     inline_keyboard.extend([
         [InlineKeyboardButton(text='📦 Запасы', callback_data='outlet:stock')],
-        [InlineKeyboardButton(text='📈 Статистика', callback_data='outlet:statistics')],
+        [InlineKeyboardButton(text='📈 Анализ данных', callback_data='outlet:statistics')],
         [InlineKeyboardButton(text='🛠 Настройки', callback_data='outlet:settings')],
         [InlineKeyboardButton(text='◀️ Назад', callback_data='outlets:choose_outlet')]
         ])
