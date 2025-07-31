@@ -119,20 +119,35 @@ async def outlet_statistics_date_handler(callback: CallbackQuery, state: FSMCont
     report_data = await get_report_data(outlet_id, finished_datetime)
     
     report_id = report_data['report_id']
-    purchases = report_data['report_purchases']
     revenue = round(report_data['report_revenue'], 2)
+    
+    # если данных по расчетной выручке нет, то хотим избежать ошибки
+    expected_revenue = await get_expected_revenue(outlet_id, finished_datetime)
+    if not expected_revenue is None:
+        expected_revenue = round(expected_revenue, 2)
+        expected_revenue_text = f"Расчетная - <b>{expected_revenue} руб</b>\n"
+        revenue_difference = revenue - expected_revenue
+        revenue_difference_percent = round(((revenue - expected_revenue) * 100) / expected_revenue, 2)
+        revenue_difference__text = f'Разница  - <b>{revenue_difference} руб ({revenue_difference_percent}%)</b>\n'
+    else:
+        expected_revenue_text = 'Расчетная - <b>Нет данных</b>\n'
+        revenue_difference__text = ''
+    
+    purchases = report_data['report_purchases']
     note = report_data['report_note']
-    expected_revenue = round(await get_expected_revenue(outlet_id, finished_datetime), 2)
-    revenue_difference = revenue - expected_revenue
-    revenue_difference_percent = round(((revenue - expected_revenue) * 100) / expected_revenue, 2)
+    
+    if not note is None:
+        note_text = f'✍️ <b>Примечание:</b>\n{note}'
+    else:
+        note_text = ''
     
     text = f'📝 <b>ОТЧЕТ №{report_id} ЗА {finished_datetime.strftime('%d-%m-%Y')}</b>\n\n' \
             '💵 <b>Выручка:</b>\n' \
-            f'Расчетная - <b>{expected_revenue} руб</b>\n' \
+            f'{expected_revenue_text}' \
             f'Фактическая - <b>{revenue} руб</b>\n' \
-            f'Разница  - <b>{revenue_difference} руб ({revenue_difference_percent}%)</b>\n\n' \
+            f'{revenue_difference__text}\n' \
             f'🧾 <b>Количество покупок - {purchases}</b>\n\n' \
-            f'✍️ <b>Примечание:</b>\n{note}' \
+            f'{note_text}' \
     
     # на случай, если захочу изменить
     await state.update_data(report={'report_datetime': {'year': date_comp[0],
