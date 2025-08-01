@@ -29,14 +29,10 @@ stock_menu = Router()
 
 # функция для формирования сообщения о пополнении товара
 async def replenishment_text(outlet_id, product_id, added_pieces):
-    outlet_data = await get_outlet(outlet_id)
-    outlet_name = outlet_data['outlet_name']
-    
     # достаем данные о запасах конкретного продукта
     stock_product_data = await get_stock_product(outlet_id, product_id)
     product_unit = stock_product_data['product_unit']
     stock_qty = stock_product_data['stock_qty']
-    # stock_id = stock_product_data['stock_id']
     product_name = stock_product_data['product_name']
     
     product_unit_amend = product_unit
@@ -68,17 +64,13 @@ async def replenishment_text(outlet_id, product_id, added_pieces):
         
     text = f'➕ Пополнение товара <b>{product_name}</b>\n\n' \
             f'Текущий запас товара - <b>{stock_qty} {product_unit}</b>\n' \
-            f'{added_pieces_text}' \
-            # '\nПо окончании добавления всех частей товара нажмите <b>Расчитать</b> в противном случае нажмите <b>Отмена</b>.'
+            f'{added_pieces_text}'
     
     return text
 
 
 # функция для формирования сообщения о списании товара
-async def writeoff_text(outlet_id, product_id, added_pieces):
-    outlet_data = await get_outlet(outlet_id)
-    outlet_name = outlet_data['outlet_name']
-    
+async def writeoff_text(outlet_id, product_id, added_pieces):   
     # достаем данные о запасах конкретного продукта
     stock_product_data = await get_stock_product(outlet_id, product_id)
     product_unit = stock_product_data['product_unit']
@@ -107,11 +99,9 @@ async def writeoff_text(outlet_id, product_id, added_pieces):
         added_pieces_text = f'\nВведите количество продукта в <b>{product_unit_amend}</b>. Количество продукта можно вводить частами или сразу суммарное.\n'
         
         
-    text = '➖ <b>СПИСАНИЕ</b>\n\n' \
-            f'Вы пытаетесь списать часть запасов товара <b>{product_name}</b> в тороговой точке <b>{outlet_name}</b>.\n\n' \
+    text = f'➖ Списание товара <b>{product_name}</b>\n\n' \
             f'Текущий запас товара - <b>{stock_qty} {product_unit}</b>\n' \
-            f'{added_pieces_text}' \
-            # f'\nПо окончании добавления всех частей товара нажмите <b>Расчитать</b> в противном случае нажмите <b>Отмена</b>.'
+            f'{added_pieces_text}'
     
     return text
 
