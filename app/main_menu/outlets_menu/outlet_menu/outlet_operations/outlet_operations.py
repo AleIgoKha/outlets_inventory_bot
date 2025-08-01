@@ -47,10 +47,12 @@ async def rollback_balance_text(outlet_id, product_id):
     if not transaction_parts is None and len(transaction_parts) > 1:
         text += f'Части товара в остатке:\n'
         for part in transaction_parts:
+            product_unit_amend = product_unit
             if product_unit != 'шт.':
                 part = part * Decimal(1000)
+                product_unit_amend = 'г'
             
-            text += f'- <b>{round(part)} {product_unit}</b>\n'
+            text += f'- <b>{round(part)} {product_unit_amend}</b>\n'
         
     return text
 
