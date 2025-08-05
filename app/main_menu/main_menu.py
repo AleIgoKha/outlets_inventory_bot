@@ -1,22 +1,17 @@
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery
-from aiogram.filters import Filter, Command
+from aiogram.filters import Command, or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
 
 import app.main_menu.keyboard as kb
+from app.com_func import User, Admin
 
 main_menu = Router()
 
-admin_list = [524794800, 405514693, 450847990, 7634611527]
-
-class Admin(Filter):
-    async def __call__(self, message: Message):
-        return message.from_user.id in admin_list
-
 
 # Главное меню
-@main_menu.message(Admin(), Command('start'))
+@main_menu.message(or_f(User(), Admin()), Command('start'))
 async def start_handler(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
     await message.delete()
@@ -28,12 +23,17 @@ async def start_handler(message: Message, state: FSMContext, bot: Bot):
         try:
             bad_tries = 0
             await bot.delete_message(chat_id=chat_id, message_id=id)
-        except TelegramBadRequest:
+        except TelegramBadRequest as e:
+            print(e)
             bad_tries += 1
             if bad_tries <= 5:
                 continue
             else:
                 break
+            
+            
+
+            
 
 # Возвращение через колбэк в главное меню или при вызове функции
 @main_menu.callback_query(F.data == 'main:menu')

@@ -2,9 +2,32 @@ import pytz
 from datetime import datetime, timedelta
 from functools import wraps
 from contextlib import asynccontextmanager
+from aiogram.types import Message
+from aiogram.filters import Filter
 
 
 from app.database.models import async_session
+
+
+user_list = [524794800, 405514693, 450847990]
+
+class User(Filter):
+    async def __call__(self, message: Message):
+        return message.from_user.id in user_list
+
+admin_list = [7634611527]
+
+class Admin(Filter):
+    async def __call__(self, message: Message):
+        # if not message.from_user.id in user_list:
+            # chat_id = message.chat.id
+            # await message.bot.send_message(chat_id=chat_id,
+            #                                text=f'<b>Ваш ID</b>: <code>{message.from_user.id}</code>',
+            #                                parse_mode='HTML')
+            # print(message.from_user.id)
+        return message.from_user.id in admin_list
+
+
 
 
 # session context manager

@@ -12,7 +12,8 @@ from app.states import Report
 from app.database.requests.stock import get_active_stock_products
 from app.database.requests.reports import save_report, is_there_report
 from app.database.requests.transactions import were_stock_transactions, balance_transactions_number_today
-from app.main_menu.outlets_menu.outlet_menu.outlet_menu import outlet_menu_handler
+from app.main_menu.outlets_menu.outlet_menu.outlet_menu import outlet_menu_handler, user_outlet_menu_handler
+from app.com_func import Admin, User
 
 
 report_menu = Router()
@@ -251,7 +252,7 @@ async def send_report_handler(callback: CallbackQuery, state: FSMContext):
     
 
 # При подтверждении отправки отчета создаем его и выходим в меню торговой точки
-@report_menu.callback_query(F.data == 'outlet:report_menu:send_report:confirm')
+@report_menu.callback_query(Admin(), F.data == 'outlet:report_menu:send_report:confirm')
 async def confirm_send_report_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     
@@ -281,4 +282,38 @@ async def confirm_send_report_handler(callback: CallbackQuery, state: FSMContext
     
     # переходим в меню торговой точки
     await outlet_menu_handler(callback, state)
+    await callback.answer(text='Отчет успешно отправлен', show_alert=True)
+    
+    
+# При подтверждении отправки отчета создаем его и выходим в меню торговой точки для пользователя
+@report_menu.callback_query(User(), F.data == 'outlet:report_menu:send_report:confirm')
+async def user_confirm_send_report_handler(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    
+    outlet_id = data['outlet_id']
+    report = data['report']
+    
+    report_data = {
+        'outlet_id': outlet_id,
+        'report_purchases': report['purchases'],
+        'report_revenue': Decimal(report['revenue']),
+        'report_note': report['note']
+    }
+    
+    try:
+        await save_report(report_data)
+    except:
+        await callback.answer(text='Невозможно отправить отчет', show_alert=True)
+        return None
+
+    # удаляем данные об отчете
+    report = {
+            'purchases': None,
+            'revenue': None,
+            'note': None
+            }
+    await state.update_data(report=report)
+    
+    # переходим в меню торговой точки
+    await user_outlet_menu_handler(callback, state)
     await callback.answer(text='Отчет успешно отправлен', show_alert=True)

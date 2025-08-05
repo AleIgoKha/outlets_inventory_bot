@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 import app.main_menu.outlets_menu.keyboard as kb
 from app.states import Outlet
 from app.database.requests.outlets import add_outlet
+from app.com_func import Admin, User
 
 
 outlets_menu = Router()
@@ -24,9 +25,9 @@ def outlets_menu_text(data):
 
 
 # Открываем существующую торговую точку
-@outlets_menu.callback_query(F.data.startswith('outlets:outlet_page_'))
-@outlets_menu.callback_query(F.data == 'outlets:choose_outlet')
-async def choose_outlet_handler(callback: CallbackQuery, state: FSMContext):
+@outlets_menu.callback_query(Admin(), F.data.startswith('outlets:outlet_page_'))
+@outlets_menu.callback_query(Admin(), F.data == 'outlets:choose_outlet')
+async def admin_choose_outlet_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     if callback.data.startswith('outlets:outlet_page_'):
         try:
@@ -36,7 +37,24 @@ async def choose_outlet_handler(callback: CallbackQuery, state: FSMContext):
     else:
         page = 1
     await callback.message.edit_text('🏪 <b>МЕНЮ ТОРГОВОЙ ТОЧКИ</b>',
-                                     reply_markup=await kb.choose_outlet(page=page),
+                                     reply_markup=await kb.admin_choose_outlet(page=page),
+                                     parse_mode='HTML')
+
+
+# Открываем существующую торговую точку
+@outlets_menu.callback_query(User(), F.data.startswith('outlets:outlet_page_'))
+@outlets_menu.callback_query(User(), F.data == 'outlets:choose_outlet')
+async def user_choose_outlet_handler(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    if callback.data.startswith('outlets:outlet_page_'):
+        try:
+            page = int(callback.data.split('_')[-1])
+        except ValueError:
+            return None
+    else:
+        page = 1
+    await callback.message.edit_text('🏪 <b>МЕНЮ ТОРГОВОЙ ТОЧКИ</b>',
+                                     reply_markup=await kb.user_choose_outlet(page=page),
                                      parse_mode='HTML')
 
 
@@ -135,7 +153,7 @@ async def change_new_outlet_handler(callback: CallbackQuery, state: FSMContext):
 
 
 # Сохраняем новую торговую точку
-@outlets_menu.callback_query(F.data == 'outlets:confirm_new_outlet')
+@outlets_menu.callback_query(Admin(), F.data == 'outlets:confirm_new_outlet')
 async def confirm_new_outlet_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     outlet_data = {
@@ -149,8 +167,8 @@ async def confirm_new_outlet_handler(callback: CallbackQuery, state: FSMContext)
         return None
     
     await callback.answer(text='Торговая точка успешно создана', show_alert=True)
-    await choose_outlet_handler(callback, state)
-    
+    await admin_choose_outlet_handler(callback, state)
+
 
 # Отмена создания торговой точки
 @outlets_menu.callback_query(F.data == 'outlets:confirm_cancel_new_outlet')

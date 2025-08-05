@@ -7,6 +7,7 @@ import app.main_menu.outlets_menu.outlet_menu.keyboard as kb
 from app.main_menu.main_menu import main_menu_handler 
 from app.states import Outlet
 from app.database.requests.outlets import get_outlet, change_outlet_data, delete_outlet
+from app.com_func import Admin, User
 
 outlet_menu = Router()
 
@@ -91,8 +92,8 @@ async def outlet_settings_menu_text(data, state):
 
 
 # Заходим в меню выбранной сеществующей торговой точки
-@outlet_menu.callback_query(F.data == 'outlet:back')
-@outlet_menu.callback_query(F.data.startswith('outlet:outlet_id_'))
+@outlet_menu.callback_query(Admin(), F.data == 'outlet:back')
+@outlet_menu.callback_query(Admin(), F.data.startswith('outlet:outlet_id_'))
 async def outlet_menu_handler(callback: CallbackQuery, state: FSMContext):
     if callback.data.startswith('outlet:outlet_id_'):
         outlet_id = int(callback.data.split('_')[-1])
@@ -104,6 +105,23 @@ async def outlet_menu_handler(callback: CallbackQuery, state: FSMContext):
     text = await outlet_menu_text(data, state)
     await callback.message.edit_text(text=text,
                                     reply_markup=await kb.outlet_menu(outlet_id),
+                                    parse_mode='HTML')
+    
+    
+# Заходим в меню выбранной сеществующей торговой точки
+@outlet_menu.callback_query(User(), F.data == 'outlet:back')
+@outlet_menu.callback_query(User(), F.data.startswith('outlet:outlet_id_'))
+async def user_outlet_menu_handler(callback: CallbackQuery, state: FSMContext):
+    if callback.data.startswith('outlet:outlet_id_'):
+        outlet_id = int(callback.data.split('_')[-1])
+        await state.update_data(outlet_id=outlet_id,
+                                message_id=callback.message.message_id,
+                                chat_id=callback.message.chat.id)
+    data = await state.get_data()
+    outlet_id = data['outlet_id']
+    text = await outlet_menu_text(data, state)
+    await callback.message.edit_text(text=text,
+                                    reply_markup=await kb.user_outlet_menu(outlet_id),
                                     parse_mode='HTML')
  
         
