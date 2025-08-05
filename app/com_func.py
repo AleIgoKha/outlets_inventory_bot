@@ -9,13 +9,19 @@ from aiogram.filters import Filter
 from app.database.models import async_session
 
 
-user_list = [524794800, 405514693, 450847990]
+user_list = [
+    450847990 # my mother's account
+    ]
 
 class User(Filter):
     async def __call__(self, message: Message):
         return message.from_user.id in user_list
 
-admin_list = [7634611527]
+admin_list = [
+    7634611527, # my secondary account
+    524794800, # my primary account
+    405514693  # my father's account
+    ]
 
 class Admin(Filter):
     async def __call__(self, message: Message):
@@ -33,13 +39,11 @@ class Admin(Filter):
 # session context manager
 @asynccontextmanager
 async def get_session():
-    # print("📥 Opening DB session")
     async with async_session() as session:
         try:
             yield session
         finally:
             pass
-            # print("📤 Closing DB session")
 
 
 # decorator factory
@@ -76,22 +80,6 @@ def get_utc_day_bounds(date_time: datetime):
     end_of_day = start_of_day + timedelta(days=1)
     
     return start_of_day, end_of_day
-
-
-# # границы начала и конца дня
-# def get_chisinau_day_bounds(date_time: datetime):
-#     tz = pytz.timezone("Europe/Chisinau")
-    
-#     # Ensure datetime is timezone-aware in Chisinau
-#     if date_time.tzinfo is None:
-#         date_time = tz.localize(date_time)
-#     else:
-#         date_time = date_time.astimezone(tz)
-    
-#     start_of_day = datetime.combine(date_time.date(), time.min, tzinfo=tz)
-#     end_of_day = start_of_day + timedelta(days=1)
-    
-#     return start_of_day.astimezone(pytz.utc), end_of_day.astimezone(pytz.utc)
 
 
 # функция для локализации инпута и now()
