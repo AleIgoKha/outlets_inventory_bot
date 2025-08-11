@@ -1,27 +1,26 @@
+import os
 import pytz
 from datetime import datetime, timedelta
 from functools import wraps
 from contextlib import asynccontextmanager
 from aiogram.types import Message
 from aiogram.filters import Filter
+from dotenv import load_dotenv
 
 
 from app.database.models import async_session
 
 
-user_list = [
-    450847990 # my mother's account
-    ]
+load_dotenv()
+
+user_list = list(map(int, os.getenv("USERS", "").split(',')))
 
 class User(Filter):
     async def __call__(self, message: Message):
         return message.from_user.id in user_list
 
-admin_list = [
-    7634611527, # my secondary account
-    524794800, # my primary account
-    405514693  # my father's account
-    ]
+admin_list = list(map(int, os.getenv("ADMINS", "").split(',')))
+
 
 class Admin(Filter):
     async def __call__(self, message: Message):

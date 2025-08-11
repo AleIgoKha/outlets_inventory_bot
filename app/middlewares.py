@@ -26,3 +26,17 @@ class OutOfPagesAnswer(BaseMiddleware):
                 text='Крайняя страница',
             )
         return result
+
+
+class SaveBotMessagesMiddleware(BaseMiddleware):
+    def __init__(self, redis):
+        self.redis = redis
+        super().__init__()
+
+    async def __call__(self, handler, event, data):
+        result = await handler(event, data)
+
+        if isinstance(result, Message):
+            await self.redis.rpush(f"chat:{result.chat.id}:messages", result.message_id)
+
+        return result
