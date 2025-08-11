@@ -20,7 +20,7 @@ from app.database.requests.transactions import (transaction_writeoff,
                                                     rollback_writeoff,
                                                     rollback_replenishment)
 from app.database.requests.outlets import get_outlet
-from app.com_func import represent_utc_3, localize_user_input
+from app.com_func import represent_utc_3, localize_user_input, Admin, User
 from app.states import Transaction
 
 
@@ -154,9 +154,9 @@ async def stock_menu_handler(callback: CallbackQuery, state: FSMContext):
 
 
 # выбор продукта для выполнения операции над ним
-@stock_menu.callback_query(F.data.startswith('outlet:control:page_'))
-@stock_menu.callback_query(F.data == 'outlet:control')
-@stock_menu.callback_query(F.data == 'outlet:control:back')
+@stock_menu.callback_query(Admin(), F.data.startswith('outlet:control:page_'))
+@stock_menu.callback_query(Admin(), F.data == 'outlet:control')
+@stock_menu.callback_query(Admin(), F.data == 'outlet:control:back')
 async def choose_product_control_handler(callback: CallbackQuery, state: FSMContext):
     await state.set_state(None)
     
@@ -195,6 +195,51 @@ async def choose_product_control_handler(callback: CallbackQuery, state: FSMCont
     await callback.message.edit_text(text='❓ <b>ВЫБЕРИТЕ ТОВАР ДЛЯ УПРАВЛЕНИЯ</b>',
                                      reply_markup=await kb.choose_product_outlet(stock_data=stock_data, page=page),
                                      parse_mode='HTML')
+
+
+# выбор продукта для выполнения операции над ним для пользователя
+@stock_menu.callback_query(User(), F.data.startswith('outlet:control:page_'))
+@stock_menu.callback_query(User(), F.data == 'outlet:control')
+@stock_menu.callback_query(User(), F.data == 'outlet:control:back')
+async def user_choose_product_control_handler(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(None)
+    
+    data = await state.get_data()
+    
+    if callback.data.startswith('outlet:control:page_'):
+        try:
+            page = int(callback.data.split('_')[-1])
+        except ValueError:
+            return None
+    elif callback.data == 'outlet:control':
+        page = 1
+    else:
+        # обновляем данные контекста, избавляемся от лишнего
+        data = {
+            'outlet_id': data['outlet_id'],
+            'outlet_name': data['outlet_name'],
+            'outlet_descr': data['outlet_descr'],
+            'outlet_arch': data['outlet_arch'],
+            'message_id': data['message_id'],
+            'chat_id': data['chat_id'],
+            'page': data['page'],
+            }
+        await state.clear()
+        await state.update_data(data)
+        data = await state.get_data()
+        # Сохраняем страницу (лучше это не убирать отсюда)
+        page = data['page']
+        
+    # сохраняем страницу для удобства при возвращении
+    await state.update_data(page=page)
+    
+    outlet_id = data['outlet_id']
+    stock_data = await get_active_stock_products(outlet_id)
+    
+    await callback.message.edit_text(text='❓ <b>ВЫБЕРИТЕ ТОВАР ДЛЯ УПРАВЛЕНИЯ</b>',
+                                     reply_markup=await kb.user_choose_product_outlet(stock_data=stock_data, page=page),
+                                     parse_mode='HTML')
+
 
 
 # операция добавления новых продуктов на склад
@@ -258,8 +303,9 @@ async def confirm_add_product_handler(callback: CallbackQuery, state: FSMContext
     except:
         await callback.answer(text='Невозможно создать транзакцию', show_alert=True)
 
+
 # меню управления товаром
-@stock_menu.callback_query(F.data.startswith('outlet:control:product_id_'))
+@stock_menu.callback_query(Admin(), F.data.startswith('outlet:control:product_id_'))
 async def product_control_handler(callback: CallbackQuery, state: FSMContext):
     await state.set_state(None)
     
@@ -305,6 +351,56 @@ async def product_control_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.edit_text(text=text,
                                         reply_markup=kb.product_control_menu,
+                                        parse_mode='HTML')
+
+
+# меню управления товаром для пользователя
+@stock_menu.callback_query(User(), F.data.startswith('outlet:control:product_id_'))
+async def user_product_control_handler(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(None)
+    
+    data = await state.get_data()
+    
+    # Если пришли по вызову функции
+    if callback.data.startswith('outlet:control:product_id_'):
+        product_id = int(callback.data.split('_')[-1])    
+    else:
+        product_id = data['product_id']   
+    
+    outlet_id = data['outlet_id']
+    
+    # достаем данные о торговой точке
+    outlet_data = await get_outlet(outlet_id)
+    outlet_name = outlet_data['outlet_name']
+
+    # достаем данные о запасах конкретного продукта
+    stock_product_data = await get_stock_product(outlet_id, product_id)
+    product_unit = stock_product_data['product_unit']
+    stock_qty = stock_product_data['stock_qty']
+    stock_id = stock_product_data['stock_id']
+    product_name = stock_product_data['product_name']
+
+    await state.update_data(stock_qty=str(stock_qty),
+                            product_unit=product_unit,
+                            product_id=product_id,
+                            stock_id=stock_id,
+                            product_name=product_name,
+                            added_pieces=[], 
+                            transaction_datetime=None,
+                            from_callback=None)
+    
+    if product_unit == 'шт.':
+        stock_qty = int(stock_qty)
+
+    text = '⚙️ <b>МЕНЮ УПРАВЛЕНИЯ ТОВАРОМ</b>\n\n' \
+            f'Название товара - <b>{product_name}</b>\n' \
+            f'Текущая торговая точка - <b>{outlet_name}</b>\n' \
+            f'Запас товара - <b>{stock_qty} {product_unit}</b>\n\n' \
+            f'Выберите операцию управления товаром.'
+    
+
+    await callback.message.edit_text(text=text,
+                                        reply_markup=kb.user_product_control_menu,
                                         parse_mode='HTML')
 
 
@@ -417,7 +513,7 @@ async def calculate_replenishment_handler(callback: CallbackQuery, state: FSMCon
 
         
 # создаем транзакцию для пополнения запаса
-@stock_menu.callback_query(F.data == 'outlet:replenishment:confirm')
+@stock_menu.callback_query(Admin(), F.data == 'outlet:replenishment:confirm')
 async def confirm_replenishment_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     
@@ -444,6 +540,36 @@ async def confirm_replenishment_handler(callback: CallbackQuery, state: FSMConte
             await choose_product_control_handler(callback, state)
         elif from_callback == 'outlet:control:transactions':
             await choose_transaction_product_handler(callback, state)
+    except:
+        await callback.answer(text='Невозможно создать транзакцию', show_alert=True)
+        
+    await state.update_data(transaction_datetime=None)
+
+
+# создаем транзакцию для пополнения запаса для пользователя
+@stock_menu.callback_query(User(), F.data == 'outlet:replenishment:confirm')
+async def confirm_replenishment_handler(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    
+    outlet_id = data['outlet_id']
+    product_id = data['product_id']
+    added_pieces = [Decimal(added_piece) for added_piece in data['added_pieces']]
+    product_qty = sum(added_pieces)
+    product_unit = data['product_unit']
+    transaction_datetime = data['transaction_datetime']
+    
+    if transaction_datetime:
+        transaction_datetime = localize_user_input(datetime(**data['transaction_datetime']))
+
+    if product_unit == 'кг':
+        product_qty = product_qty / Decimal(1000)
+        added_pieces = [added_piece / Decimal(1000) for added_piece in added_pieces]
+
+    try:
+        # создаем транзакцию для пополнения запасов товара и обновляем его количество
+        await transaction_replenish(outlet_id, product_id, product_qty, added_pieces, transaction_datetime)
+        await callback.answer(text='Запасы продукта успешно пополнены', show_alert=True)
+        await user_choose_product_control_handler(callback, state)
     except:
         await callback.answer(text='Невозможно создать транзакцию', show_alert=True)
         
@@ -662,7 +788,7 @@ async def all_writeoff_handler(callback: CallbackQuery, state: FSMContext):
 
 
 # подтверждение списания запасов товара
-@stock_menu.callback_query(F.data == 'outlet:writeoff:confirm')
+@stock_menu.callback_query(Admin(), F.data == 'outlet:writeoff:confirm')
 async def confirm_writeoff_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     outlet_id = data['outlet_id']
@@ -696,6 +822,43 @@ async def confirm_writeoff_handler(callback: CallbackQuery, state: FSMContext):
             await choose_product_control_handler(callback, state)
         elif from_callback == 'outlet:control:transactions':
             await choose_transaction_product_handler(callback, state)
+    except:
+        await callback.answer(text='Невозможно создать транзакцию', show_alert=True)
+
+    await state.update_data(transaction_datetime=None)
+
+
+# подтверждение списания запасов товара для пользователя
+@stock_menu.callback_query(User(), F.data == 'outlet:writeoff:confirm')
+async def user_confirm_writeoff_handler(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    outlet_id = data['outlet_id']
+    product_id = data['product_id']
+    product_unit = data['product_unit']
+    
+    added_pieces = [Decimal(added_piece) for added_piece in data['added_pieces']]
+    product_qty = sum(added_pieces)
+            
+    # переводим граммы в килограммы
+    if product_unit == 'кг':
+        product_qty = product_qty / Decimal(1000)
+        added_pieces = [added_piece / Decimal(1000) for added_piece in added_pieces]
+    
+    # если добавленных кусков нет, то это может быть только списание всего продукта
+    if len(added_pieces) == 0:
+        stock_qty = data['stock_qty']
+        product_qty = Decimal(stock_qty)
+    
+    transaction_datetime = data['transaction_datetime']
+    
+    if transaction_datetime:
+        transaction_datetime = localize_user_input(datetime(**data['transaction_datetime']))
+
+    try:
+        # создаем транзакцию для списания запасов товара и обновляем его количество
+        await transaction_writeoff(outlet_id, product_id, product_qty, added_pieces, transaction_datetime)
+        await callback.answer(text='Запасы продукта успешно списаны', show_alert=True)
+        await user_choose_product_control_handler(callback, state)
     except:
         await callback.answer(text='Невозможно создать транзакцию', show_alert=True)
 
@@ -747,7 +910,7 @@ async def delete_stock_handler(callback: CallbackQuery, state: FSMContext):
 
 
 # подтверждение удаления товара из запасов
-@stock_menu.callback_query(F.data == 'outlet:stock:delete:confirm')
+@stock_menu.callback_query(Admin(), F.data == 'outlet:stock:delete:confirm')
 async def confirm_stock_delete_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     outlet_id = data['outlet_id']
@@ -758,6 +921,22 @@ async def confirm_stock_delete_handler(callback: CallbackQuery, state: FSMContex
         await transaction_delete_product(outlet_id, product_id)
         await callback.answer(text='Продукт успешно удален из торговой точки', show_alert=True)
         await choose_product_control_handler(callback, state)
+    except:
+        await callback.answer(text='Невозможно создать транзакцию', show_alert=True)
+
+
+# подтверждение удаления товара из запасов для пользователя
+@stock_menu.callback_query(User(), F.data == 'outlet:stock:delete:confirm')
+async def user_confirm_stock_delete_handler(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    outlet_id = data['outlet_id']
+    product_id = data['product_id']
+
+    try:
+        # создаем транзакцию для пополнения запасов товара и обновляем его количество
+        await transaction_delete_product(outlet_id, product_id)
+        await callback.answer(text='Продукт успешно удален из торговой точки', show_alert=True)
+        await user_choose_product_control_handler(callback, state)
     except:
         await callback.answer(text='Невозможно создать транзакцию', show_alert=True)
 

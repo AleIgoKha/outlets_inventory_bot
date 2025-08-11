@@ -80,6 +80,64 @@ async def choose_product_outlet(stock_data: list, page: int = 1, products_per_pa
     return product_keyboard.as_markup()
 
 
+# выбор продукта для пополнения пользователем
+async def user_choose_product_outlet(stock_data: list, page: int = 1, products_per_page: int = 8):
+    product_keyboard = InlineKeyboardBuilder()
+    
+    start = (page - 1) * products_per_page
+    end = start + products_per_page
+    current_items = stock_data[start:end]
+    
+    for current_item in current_items:
+        product_name = current_item['product_name']
+        stock_qty = current_item['stock_qty']
+        product_unit = current_item['product_unit']
+        stock_id = current_item['stock_id']
+        
+        if product_unit != 'кг':
+            stock_qty = round(stock_qty)
+        
+        text = f"{product_name} - {stock_qty} {product_unit}"
+        
+        # проверяем были ли пополнения сегодня
+        date_time = datetime.now(pytz.timezone("Europe/Chisinau"))
+        check_flag = await were_stock_transactions(stock_id, date_time, ['replenishment'])
+        if check_flag:
+            text += ' ➕'
+        
+        callback_data = f"outlet:control:product_id_{current_item['product_id']}"
+        product_keyboard.add(InlineKeyboardButton(text=text, callback_data=callback_data))
+    
+    product_keyboard.adjust(1)   
+    
+    navigation_buttons = []
+    
+    if page > 1:
+        navigation_buttons.append(
+            InlineKeyboardButton(text="⬅️ Назад", callback_data=f"outlet:control:page_{page - 1}")
+        )
+    else:
+        navigation_buttons.append(
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="outlet:control:page_edge")
+        )
+    
+    navigation_buttons.append(InlineKeyboardButton(text='❌ Отмена', callback_data='outlet:stock'))
+    
+    if end < len(stock_data):
+        navigation_buttons.append(
+            InlineKeyboardButton(text="Далее ➡️", callback_data=f"outlet:control:page_{page + 1}")
+        )
+    else:
+        navigation_buttons.append(
+            InlineKeyboardButton(text="Далее ➡️", callback_data="outlet:control:page_edge")
+        )
+        
+    if navigation_buttons:
+        product_keyboard.row(*navigation_buttons)
+
+    return product_keyboard.as_markup()
+
+
 # выбор продукта для добавления
 def choose_product_add(products: list, page: int = 1, products_per_page: int = 8):
     product_keyboard = InlineKeyboardBuilder()
@@ -136,6 +194,14 @@ product_control_menu = InlineKeyboardMarkup(inline_keyboard=[
     InlineKeyboardButton(text='➖ Списать', callback_data='outlet:writeoff')],
     [InlineKeyboardButton(text='📓 Транзакции', callback_data='outlet:control:transactions'),
     InlineKeyboardButton(text='🗑 Удалить', callback_data='outlet:stock:delete')],
+    [InlineKeyboardButton(text='◀️ Назад', callback_data='outlet:control:back')]
+])
+
+
+# меню управления запасами продукта
+user_product_control_menu = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='➕ Пополнить', callback_data='outlet:replenishment'),
+    InlineKeyboardButton(text='➖ Списать', callback_data='outlet:writeoff')],
     [InlineKeyboardButton(text='◀️ Назад', callback_data='outlet:control:back')]
 ])
 

@@ -28,6 +28,27 @@ async def outlet_menu(outlet_id):
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
 
+# меню сессии для пользователя
+async def user_outlet_menu(outlet_id):
+    inline_keyboard = []
+    
+    today = datetime.now(pytz.timezone('Europe/Chisinau'))
+    check_flag = await is_there_report(outlet_id, today)
+    
+    check_text = ''
+    if check_flag:
+        check_text = ' ☑️'
+    
+    inline_keyboard.append([InlineKeyboardButton(text=f'📝 Отчет{check_text}', callback_data='outlet:report_menu')])
+    
+    inline_keyboard.extend([
+        [InlineKeyboardButton(text='📦 Запасы', callback_data='outlet:stock')],
+        [InlineKeyboardButton(text='◀️ Назад', callback_data='outlets:choose_outlet')]
+        ])
+    
+    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+
+
 # Настройки сессии
 settings_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='📋 Изменить название торговой точки', callback_data='outlet:change_name')],

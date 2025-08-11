@@ -1,22 +1,48 @@
+import os
 import pytz
 from datetime import datetime, timedelta
 from functools import wraps
 from contextlib import asynccontextmanager
+from aiogram.types import Message
+from aiogram.filters import Filter
+from dotenv import load_dotenv
 
 
 from app.database.models import async_session
 
 
+load_dotenv()
+
+user_list = list(map(int, os.getenv("USERS", "").split(',')))
+
+class User(Filter):
+    async def __call__(self, message: Message):
+        return message.from_user.id in user_list
+
+admin_list = list(map(int, os.getenv("ADMINS", "").split(',')))
+
+
+class Admin(Filter):
+    async def __call__(self, message: Message):
+        # if not message.from_user.id in user_list:
+            # chat_id = message.chat.id
+            # await message.bot.send_message(chat_id=chat_id,
+            #                                text=f'<b>Ваш ID</b>: <code>{message.from_user.id}</code>',
+            #                                parse_mode='HTML')
+            # print(message.from_user.id)
+        return message.from_user.id in admin_list
+
+
+
+
 # session context manager
 @asynccontextmanager
 async def get_session():
-    # print("📥 Opening DB session")
     async with async_session() as session:
         try:
             yield session
         finally:
             pass
-            # print("📤 Closing DB session")
 
 
 # decorator factory
@@ -53,22 +79,6 @@ def get_utc_day_bounds(date_time: datetime):
     end_of_day = start_of_day + timedelta(days=1)
     
     return start_of_day, end_of_day
-
-
-# # границы начала и конца дня
-# def get_chisinau_day_bounds(date_time: datetime):
-#     tz = pytz.timezone("Europe/Chisinau")
-    
-#     # Ensure datetime is timezone-aware in Chisinau
-#     if date_time.tzinfo is None:
-#         date_time = tz.localize(date_time)
-#     else:
-#         date_time = date_time.astimezone(tz)
-    
-#     start_of_day = datetime.combine(date_time.date(), time.min, tzinfo=tz)
-#     end_of_day = start_of_day + timedelta(days=1)
-    
-#     return start_of_day.astimezone(pytz.utc), end_of_day.astimezone(pytz.utc)
 
 
 # функция для локализации инпута и now()

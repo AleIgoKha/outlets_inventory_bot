@@ -4,8 +4,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from app.database.requests.outlets import get_outlets
 
 
-# Функция для создания клавиатуры-списка сессий с пагинацией
-async def choose_outlet(page: int = 1, outlets_per_page: int = 8):
+# Функция для создания клавиатуры-списка сессий с пагинацией для админа
+async def admin_choose_outlet(page: int = 1, outlets_per_page: int = 8):
     outlets = await get_outlets()
     outlets = [outlet for outlet in outlets if not outlet.outlet_arch]
     outlet_keyboard = InlineKeyboardBuilder()
@@ -54,6 +54,52 @@ async def choose_outlet(page: int = 1, outlets_per_page: int = 8):
         outlet_keyboard.row(*navigation_buttons)
 
     return outlet_keyboard.as_markup()
+
+
+# Функция для создания клавиатуры-списка сессий с пагинацией для админа
+async def user_choose_outlet(page: int = 1, outlets_per_page: int = 8):
+    outlets = await get_outlets()
+    outlets = [outlet for outlet in outlets if not outlet.outlet_arch]
+    outlet_keyboard = InlineKeyboardBuilder()
+    
+    start = (page - 1) * outlets_per_page
+    end = start + outlets_per_page
+    current_outlets = outlets[start:end]
+    
+    for outlet in current_outlets:
+        text = f"{outlet.outlet_name}"
+        callback_data = f"outlet:outlet_id_{outlet.outlet_id}"
+        outlet_keyboard.add(InlineKeyboardButton(text=text, callback_data=callback_data))
+        
+    outlet_keyboard.adjust(1)
+    
+    navigation_buttons = []
+    
+    if page > 1:
+        navigation_buttons.append(
+            InlineKeyboardButton(text="⬅️ Назад", callback_data=f"outlets:outlet_page_{page - 1}")
+        )
+    else:
+        navigation_buttons.append(
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="outlets:outlet_page_edge")
+        )
+    
+    navigation_buttons.append(InlineKeyboardButton(text='🏠 В главное меню', callback_data='main:menu'))
+    
+    if end < len(outlets):
+        navigation_buttons.append(
+            InlineKeyboardButton(text="Вперед ➡️", callback_data=f"outlets:outlet_page_{page + 1}")
+        )
+    else:
+        navigation_buttons.append(
+            InlineKeyboardButton(text="Далее ➡️", callback_data="outlets:outlet_page_edge")
+        )
+        
+    if navigation_buttons:
+        outlet_keyboard.row(*navigation_buttons)
+
+    return outlet_keyboard.as_markup()
+
 
 
 # Возврат в меню выбора сессии
