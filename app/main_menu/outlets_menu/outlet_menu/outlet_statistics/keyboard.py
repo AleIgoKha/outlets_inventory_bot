@@ -1,3 +1,4 @@
+import pytz
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import date, datetime
 from calendar import monthrange
@@ -53,7 +54,8 @@ async def calendar_keyboard(outlet_id, year: int, month: int) -> InlineKeyboardM
             else:
                 day_text = str(day_counter)
                 check_flag = await is_there_report(outlet_id, datetime(year, month, day_counter))
-                if day_counter == date.today().day and month == date.today().month and year == date.today().year:
+                today = datetime.now(pytz.timezone("Europe/Chisinau"))
+                if day_counter == today.day and month == today.month and year == today.year:
                     day_text = '🌞'
                 # если за день были продающие транзакции, то ставим галочку возле даты
                 if check_flag:

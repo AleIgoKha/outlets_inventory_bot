@@ -445,8 +445,8 @@ def transaction_calendar_keyboard(year: int, month: int) -> InlineKeyboardMarkup
                 row.append(InlineKeyboardButton(text=" ", callback_data="ignore"))
             else:
                 day_text = str(day_counter)
-          
-                if day_counter == date.today().day and month == date.today().month and year == date.today().year:
+                today = datetime.now(pytz.timezone("Europe/Chisinau"))
+                if day_counter == today.day and month == today.month and year == today.year:
                     day_text = '🌞'
 
                 callback_data = f"outlet:control:transactions:date:{year}:{month}:{day_counter}"
