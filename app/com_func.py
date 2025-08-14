@@ -24,15 +24,7 @@ admin_list = list(map(int, os.getenv("ADMINS", "").split(',')))
 
 class Admin(Filter):
     async def __call__(self, message: Message):
-        # if not message.from_user.id in user_list:
-            # chat_id = message.chat.id
-            # await message.bot.send_message(chat_id=chat_id,
-            #                                text=f'<b>Ваш ID</b>: <code>{message.from_user.id}</code>',
-            #                                parse_mode='HTML')
-            # print(message.from_user.id)
         return message.from_user.id in admin_list
-
-
 
 
 # session context manager
