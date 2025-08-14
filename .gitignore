@@ -2,4 +2,3 @@ __pycache__/
 .venv
 .env
 tester.py
-cheese_orders_bot.backup
