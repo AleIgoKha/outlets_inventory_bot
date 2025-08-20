@@ -10,6 +10,7 @@ from app.database.requests.reports import is_there_report
 stats_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='📝 Дневные отчеты', callback_data='outlet:statistics:express')],
     [InlineKeyboardButton(text='📊 Анализ запасов', url='https://apache-superset-production.up.railway.app/superset/dashboard/p/Oj5Mrk9Jxe9/')],
+    [InlineKeyboardButton(text='🏭 Планирование производства', url='https://apache-superset-production.up.railway.app/superset/dashboard/p/VlRD5dQJeag/')],
     [InlineKeyboardButton(text='📈 Продажи за 7 дней', url='https://apache-superset-production.up.railway.app/superset/dashboard/p/4exGEz5MBVm/')],
     [InlineKeyboardButton(text='📖 Продажи за все время', url='https://apache-superset-production.up.railway.app/superset/dashboard/p/Yo7DWqLML8d/')],
     [InlineKeyboardButton(text='◀️ Назад', callback_data='outlet:back')]
