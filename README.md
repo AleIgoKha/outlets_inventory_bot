@@ -1,5 +1,7 @@
 # Приложение для инвентаризации торговых точек
 
+![Logo](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/outlets_inventory_bot_logo.jpeg)
+
 ## Стек
 ![Python](https://img.shields.io/badge/-Python-1d1717?style=for-the-badge&logo=Python&logoColor=fff6f6)
 ![Aiogram](https://img.shields.io/badge/-Aiogram-1d1717?style=for-the-badge&logo=Aiogram&logoColor=fff6f6)
@@ -20,18 +22,30 @@
 
 ## Как работает  
 
-В приложении выбирается торговая точка и ее текущие товары. Учет ведется с помощью трех операций:  
+В приложении выбирается торговая точка и ее текущие товары. 
+
+![outlet_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/outlet_menu.PNG)![choose_product_image](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/choose_product_image.PNG)![product_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/product_menu.PNG)
+
+Учет ведется с помощью трех операций:  
 
 **Пополнение**\
 Увеличение запаса товара (фиксируется сразу при поступлении).
 
+![replenishment_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/replenishment_menu.PNG)
+
 **Списание**\
 Уменьшение запаса (брак, потери и др.).
 
+![writeoff_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/writeoff_menu.PNG)
+
 **Фиксация остатка**\
-Ежедневная отметка текущего количества товаров. По разнице с учетом всех операций считается дневная продажа.  
+Ежедневная отметка текущего количества товаров. По разнице с учетом всех операций считается дневная продажа.
+
+![balance_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/balance_menu.PNG)
 
 **Отчет**  
-В конце дня формируется отчет: остатки товаров, фактическая выручка, количество сделок и комментарий. Отчет можно отправить только один раз. После отправки ответственное лицо получает сводку с ключевыми показателями, включая разницу между фактической и расчетной выручкой.  
+В конце дня формируется отчет: остатки товаров, фактическая выручка, количество сделок и комментарий. Отчет можно отправить только один раз. После отправки ответственное лицо получает сводку с ключевыми показателями, включая разницу между фактической и расчетной выручкой.
+
+![report_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/report_menu.PNG)![report](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/report.PNG)
 
 Полученные данные используются для построения дэшбордов: анализ продаж, планирование поставок и приоритизация производства.  
