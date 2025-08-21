@@ -24,7 +24,7 @@
 
 В приложении выбирается торговая точка и ее текущие товары. 
 
-![outlet_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/outlet_menu.PNG)![choose_product_image](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/choose_product_image.PNG)![product_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/product_menu.PNG)
+![choosing_product](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/choosing_product.PNG)
 
 Учет ведется с помощью трех операций:  
 
@@ -46,6 +46,6 @@
 **Отчет**  
 В конце дня формируется отчет: остатки товаров, фактическая выручка, количество сделок и комментарий. Отчет можно отправить только один раз. После отправки ответственное лицо получает сводку с ключевыми показателями, включая разницу между фактической и расчетной выручкой.
 
-![report_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/report_menu.PNG)![report](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/report.PNG)
+![report_menu](https://github.com/AleIgoKha/outlets_inventory_bot/blob/main/assets/reporting.PNG)
 
 Полученные данные используются для построения дэшбордов: анализ продаж, планирование поставок и приоритизация производства.  
