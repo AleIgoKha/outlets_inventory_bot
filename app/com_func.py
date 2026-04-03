@@ -56,19 +56,31 @@ def with_session(commit: bool = False):
     return decorator
 
 
+
 # границы начала и конца дня
 def get_utc_day_bounds(date_time: datetime):
-    # Ensure datetime is timezone-aware in Chisinau
+    tz = pytz.timezone("Europe/Chisinau")
     
+    # Скорее всего этот участок кода более не нужен
     # Если это были цифры введенные человеком
     if date_time.tzinfo is None:
-        tz = pytz.timezone("Europe/Chisinau")
         date_time = tz.localize(date_time)
-    
-    date_time = date_time.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    start_of_day = date_time.astimezone(pytz.utc)
-    end_of_day = start_of_day + timedelta(days=1)
+    # Эта Все что ниже - важная часть
+
+    # обнуляем дату
+    date_time = date_time.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+
+    # присваиваем дате полночь по кишиневу и делаем это значение стартом дня
+    start_of_day = tz.localize(date_time)
+    start_of_day = start_of_day.astimezone(pytz.utc)
+    print('start: ', start_of_day)
+
+    # важно, что сначала делаем смещение на 1 день вперед на обнуленную дату
+    # присваиваем дате полночь по кишиневу и делаем это значение стартом следующего дня
+    end_of_day = date_time + timedelta(days=1)
+    end_of_day = tz.localize(end_of_day)
+    end_of_day = end_of_day.astimezone(pytz.utc)
+    print('end: ', end_of_day)
     
     return start_of_day, end_of_day
 
