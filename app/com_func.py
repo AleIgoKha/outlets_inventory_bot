@@ -1,10 +1,15 @@
 import os
 import pytz
+import json
+import base64
+import asyncio
 from datetime import datetime, timedelta
 from functools import wraps
 from contextlib import asynccontextmanager
 from aiogram.types import Message
 from aiogram.filters import Filter
+from google.cloud import pubsub_v1
+from google.oauth2 import service_account
 from dotenv import load_dotenv
 
 
@@ -56,6 +61,19 @@ def with_session(commit: bool = False):
     return decorator
 
 
+# функция, которая отправляет сообщение в Pub/sub, чтобы запустить синхронизацию DWH
+
+
+async def trigger_dwh_pipeline():
+    encoded_key = os.environ["RAILWAY_BQ_CONNECTION_JSON"]
+    decoded_key = base64.b64decode(encoded_key).decode("utf-8")
+    credentials_info = json.loads(decoded_key)
+    credentials = service_account.Credentials.from_service_account_info(credentials_info)
+    publisher = pubsub_v1.PublisherClient(credentials=credentials)
+    topic_path = "projects/cheese-analytics-dwh/topics/dwh-sync-trigger"
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, publisher.publish, topic_path, b"trigger")
+
 
 # границы начала и конца дня
 def get_utc_day_bounds(date_time: datetime):
@@ -73,14 +91,12 @@ def get_utc_day_bounds(date_time: datetime):
     # присваиваем дате полночь по кишиневу и делаем это значение стартом дня
     start_of_day = tz.localize(date_time)
     start_of_day = start_of_day.astimezone(pytz.utc)
-    print('start: ', start_of_day)
 
     # важно, что сначала делаем смещение на 1 день вперед на обнуленную дату
     # присваиваем дате полночь по кишиневу и делаем это значение стартом следующего дня
     end_of_day = date_time + timedelta(days=1)
     end_of_day = tz.localize(end_of_day)
     end_of_day = end_of_day.astimezone(pytz.utc)
-    print('end: ', end_of_day)
     
     return start_of_day, end_of_day
 

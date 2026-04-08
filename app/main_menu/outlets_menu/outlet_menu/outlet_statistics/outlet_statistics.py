@@ -9,7 +9,7 @@ import app.main_menu.outlets_menu.outlet_menu.outlet_statistics.keyboard as kb
 from app.database.requests.transactions import get_expected_revenue
 from app.database.requests.reports import is_there_report, get_report_data
 from app.database.requests.reports import save_report
-from app.com_func import localize_user_input
+from app.com_func import localize_user_input, trigger_dwh_pipeline
 from app.states import Report
 
 outlet_statistics = Router()
@@ -364,6 +364,13 @@ async def confirm_send_report_handler(callback: CallbackQuery, state: FSMContext
         await callback.answer(text='Невозможно отправить отчет', show_alert=True)
         return None
     
+    try:
+        await trigger_dwh_pipeline()
+        print("The DWH has been started synchronization")
+    except Exception as e:
+        print(e)
+        print('The DWH has not been synchronized')
+
     # переходим в меню торговой точки
     await outlet_statistics_handler(callback, state)
     await callback.answer(text='Отчет успешно отправлен', show_alert=True)

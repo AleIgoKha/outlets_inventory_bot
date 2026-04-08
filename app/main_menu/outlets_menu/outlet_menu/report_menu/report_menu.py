@@ -1,8 +1,8 @@
 import pytz
+
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from aiogram.exceptions import TelegramBadRequest
 from decimal import Decimal
 from datetime import datetime
 
@@ -13,7 +13,7 @@ from app.database.requests.stock import get_active_stock_products
 from app.database.requests.reports import save_report, is_there_report
 from app.database.requests.transactions import were_stock_transactions, balance_transactions_number_today
 from app.main_menu.outlets_menu.outlet_menu.outlet_menu import outlet_menu_handler, user_outlet_menu_handler
-from app.com_func import Admin, User
+from app.com_func import Admin, User, trigger_dwh_pipeline
 
 
 report_menu = Router()
@@ -279,6 +279,12 @@ async def confirm_send_report_handler(callback: CallbackQuery, state: FSMContext
             'note': None
             }
     await state.update_data(report=report)
+
+    try:
+        await trigger_dwh_pipeline()
+        print("The DWH has been started synchronization")
+    except:
+        print('The DWH has not been synchronized')
     
     # переходим в меню торговой точки
     await outlet_menu_handler(callback, state)
@@ -314,6 +320,13 @@ async def user_confirm_send_report_handler(callback: CallbackQuery, state: FSMCo
             }
     await state.update_data(report=report)
     
+    try:
+        await trigger_dwh_pipeline()
+        print("The DWH has been started synchronization")
+    except Exception as e:
+        print(e)
+        print('The DWH has not been synchronized')
+
     # переходим в меню торговой точки
     await user_outlet_menu_handler(callback, state)
     await callback.answer(text='Отчет успешно отправлен', show_alert=True)
